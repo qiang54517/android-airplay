@@ -42,13 +42,14 @@ class AudioReceiver(
                 })
             val channelFuture = bootstrap.bind().sync()
             port = (channelFuture.channel().localAddress() as InetSocketAddress).port
-
-            synchronized(monitor) { (monitor as java.lang.Object).notify() }
+            AirPlayLogger.d("AudioReceiver bound to port $port")
 
             channelFuture.channel().closeFuture().sync()
-        } catch (e: InterruptedException) {
-            // Stopped
+        } catch (e: Exception) {
+            AirPlayLogger.e("❌ AudioReceiver error: ${e.message}")
+            e.printStackTrace()
         } finally {
+            synchronized(monitor) { (monitor as java.lang.Object).notify() }
             workerGroup.shutdownGracefully()
         }
     }
@@ -75,6 +76,7 @@ class VideoReceiver(
                 .localAddress(InetSocketAddress(0))
                 .childHandler(object : ChannelInitializer<SocketChannel>() {
                     override fun initChannel(ch: SocketChannel) {
+                        AirPlayLogger.d("VideoReceiver: new video connection from ${ch.remoteAddress()}")
                         ch.pipeline().addLast("videoDecoder", VideoDecoder())
                         ch.pipeline().addLast("videoHandler", videoHandler)
                     }
@@ -84,13 +86,14 @@ class VideoReceiver(
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
             val channelFuture = serverBootstrap.bind().sync()
             port = (channelFuture.channel().localAddress() as InetSocketAddress).port
-
-            synchronized(monitor) { (monitor as java.lang.Object).notify() }
+            AirPlayLogger.i("VideoReceiver bound to port $port, waiting for video data...")
 
             channelFuture.channel().closeFuture().sync()
-        } catch (e: InterruptedException) {
-            // Stopped
+        } catch (e: Exception) {
+            AirPlayLogger.e("❌ VideoReceiver error: ${e.message}")
+            e.printStackTrace()
         } finally {
+            synchronized(monitor) { (monitor as java.lang.Object).notify() }
             bossGroup.shutdownGracefully()
             workerGroup.shutdownGracefully()
         }
@@ -120,13 +123,14 @@ class AudioControlServer(private val monitor: Any) : Runnable {
                 })
             val channelFuture = bootstrap.bind().sync()
             port = (channelFuture.channel().localAddress() as InetSocketAddress).port
-
-            synchronized(monitor) { (monitor as java.lang.Object).notify() }
+            AirPlayLogger.d("AudioControlServer bound to port $port")
 
             channelFuture.channel().closeFuture().sync()
-        } catch (e: InterruptedException) {
-            // Stopped
+        } catch (e: Exception) {
+            AirPlayLogger.e("❌ AudioControlServer error: ${e.message}")
+            e.printStackTrace()
         } finally {
+            synchronized(monitor) { (monitor as java.lang.Object).notify() }
             workerGroup.shutdownGracefully()
         }
     }
