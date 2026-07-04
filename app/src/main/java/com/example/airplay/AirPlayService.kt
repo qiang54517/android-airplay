@@ -28,6 +28,7 @@ class AirPlayService : Service(), AirPlayConsumer {
     private var videoDecoder: VideoDecoder? = null
     private var audioPlayer: AudioPlayer? = null
     private var surface: Surface? = null
+    private var staticVideoFeedCount = 0  // Counter for "decoder not ready" warnings
 
     var onStateChanged: ((String) -> Unit)? = null
 
@@ -82,14 +83,39 @@ class AirPlayService : Service(), AirPlayConsumer {
     override fun onVideoFormat(videoStreamInfo: VideoStreamInfo) {
         // Initialize video decoder when client connects
         // Resolution will be negotiated; default 1920x1080
+        AirPlayLogger.i("AirPlayService: onVideoFormat() called, surface=${surface?.isValid}, info=$videoStreamInfo")
+        
+        if (surface == null) {
+            AirPlayLogger.e("AirPlayService: SURFACE IS NULL! Cannot create VideoDecoder!")
+            return
+        }
+        
+        if (!surface!!.isValid) {
+            AirPlayLogger.e("AirPlayService: Surface is INVALID! Cannot create VideoDecoder!")
+            return
+        }
+        
         videoDecoder?.release()
         videoDecoder = VideoDecoder(surface!!)
         videoDecoder?.configure(1920, 1080)
-        onStateChanged?.invoke("视频流已连接")
+        onStateChanged?.invoke("视频流已连接 - 开始解码")
+        AirPlayLogger.i("AirPlayService: VideoDecoder configured successfully")
     }
 
     override fun onVideo(bytes: ByteArray) {
-        videoDecoder?.feedData(bytes)
+        if (videoDecoder == null || !videoDecoder!!.configured) {
+            // Only log occasionally to avoid spam
+            staticVideoFeedCount++
+            if (staticVideoFeedCount <= 3 || staticVideoFeedCount % 500 == 0) {
+                AirPlayLogger.w("AirPlayService: onVideo called but decoder not ready (decoder=${videoDecoder != null}, count=$staticVideoFeedCount)")
+            }
+            return
+        }
+        try {
+            videoDecoder?.feedData(bytes)
+        } catch (e: Exception) {
+            AirPlayLogger.e("AirPlayService: onVideo error: ${e.message}")
+        }
     }
 
     override fun onVideoSrcDisconnect() {
