@@ -103,6 +103,11 @@ abstract class ControlHandler : ChannelInboundHandlerAdapter() {
         try {
             response.headers().set(AsciiString("CSeq"), request.headers().get(AsciiString("CSeq"), "1"))
             response.headers().set(HttpHeaderNames.SERVER, "AirTunes/220.68")
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes())
+            // 如果没有设置Content-Type，默认设置为application/octet-stream
+            if (response.headers().get(HttpHeaderNames.CONTENT_TYPE) == null) {
+                response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/octet-stream")
+            }
             
             // 记录响应
             val headers = StringBuilder()
