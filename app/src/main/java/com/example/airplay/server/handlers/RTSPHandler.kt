@@ -61,7 +61,7 @@ class RTSPHandler(
                         audioThread.start()
                         AirPlayLogger.d("AudioReceiver thread started, waiting for notification...")
                         synchronized(this) { waitForNotify() }
-                        AirPlayLogger.d("AudioReceiver thread ready")
+                        AirPlayLogger.d("AudioReceiver thread ready, port=${audioReceiver.port}")
 
                         val audioControlServer = AudioControlServer(this)
                         val controlThread = Thread(audioControlServer, "airplay-audio-ctrl")
@@ -69,7 +69,7 @@ class RTSPHandler(
                         controlThread.start()
                         AirPlayLogger.d("AudioControlServer thread started, waiting for notification...")
                         synchronized(this) { waitForNotify() }
-                        AirPlayLogger.d("AudioControlServer thread ready")
+                        AirPlayLogger.d("AudioControlServer thread ready, port=${audioControlServer.port}")
 
                         val out = ByteArrayOutputStream()
                         session.airPlay.rtspSetupAudio(out, audioReceiver.port, audioControlServer.port)
@@ -88,7 +88,7 @@ class RTSPHandler(
                         videoThread.start()
                         AirPlayLogger.d("VideoReceiver thread started, waiting for notification...")
                         synchronized(this) { waitForNotify() }
-                        AirPlayLogger.d("VideoReceiver thread ready")
+                        AirPlayLogger.i("VideoReceiver thread ready, port=${videoReceiver.port}")
 
                         val out = ByteArrayOutputStream()
                         session.airPlay.rtspSetupVideo(out, videoReceiver.port, airTunesPort, 7011)
