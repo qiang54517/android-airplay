@@ -14,6 +14,6 @@ fun Any.waitNotify() {
     (this as java.lang.Object).notify()
 }
 
-fun Any.waitForNotify() {
-    (this as java.lang.Object).wait()
+fun Any.waitForNotify(timeoutMs: Long = 10000) {
+    (this as java.lang.Object).wait(timeoutMs)
 }
