@@ -6,8 +6,6 @@ import android.media.MediaFormat
 import android.util.Log
 import android.view.Surface
 import com.example.airplay.utils.AirPlayLogger
-import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
 
 class VideoDecoder(private val surface: Surface) {
 
@@ -17,10 +15,16 @@ class VideoDecoder(private val surface: Surface) {
     private var totalFramesDecoded = 0
     private var totalErrors = 0
     
-    // H.264 NAL unit assembly buffer
-    private val frameBuffer = ByteArrayOutputStream()
-    private var expectingMoreFragments = false
-    private var spsPpsData: ByteArray? = null  // Cached SPS+PPS for prepend
+    // H.264 SPS/PPS cache for prepend to IDR frames
+    private var spsPpsData: ByteArray? = null
+    
+    // NAL type counters for diagnostics
+    private var countSPS = 0
+    private var countPPS = 0
+    private var countIDR = 0
+    private var countNonIDR = 0
+    private var countOtherNAL = 0
+    private var lastHexDumpFrame = 0
     
     companion object {
         private const val TAG = "AirPlayVideo"
@@ -64,6 +68,11 @@ class VideoDecoder(private val surface: Surface) {
             totalFramesFed = 0
             totalFramesDecoded = 0
             totalErrors = 0
+            countSPS = 0
+            countPPS = 0
+            countIDR = 0
+            countNonIDR = 0
+            countOtherNAL = 0
             
             AirPlayLogger.i("VideoDecoder: codec started successfully, ready for video data")
         } catch (e: Exception) {
@@ -101,11 +110,33 @@ class VideoDecoder(private val surface: Surface) {
                 
                 when (nalType) {
                     NAL_TYPE_SPS, NAL_TYPE_PPS -> {
+                        if (nalType == NAL_TYPE_SPS) countSPS++ else countPPS++
                         // Cache SPS/PPS for later prepend to IDR frames
                         AirPlayLogger.d("VideoDecoder: Got ${if (nalType == NAL_TYPE_SPS) "SPS" else "PPS"}, size=${nalUnit.size}")
                         appendToSpsPpsCache(nalUnit)
                     }
                     else -> {
+                        // Track NAL types
+                        when (nalType) {
+                            NAL_TYPE_IDR -> countIDR++
+                            in 1..4 -> countNonIDR++
+                            else -> countOtherNAL++
+                        }
+                        
+                        // Hex dump first few non-SPS/PPS NAL units for diagnosis
+                        if (totalFramesFed <= 5 || (countOtherNAL + countNonIDR + countIDR) % 100 == 1) {
+                            val hex = if (nalUnit.size >= 20) {
+                                (0 until 20).joinToString(" ") { "%02x".format(nalUnit[it].toInt() and 0xFF) }
+                            } else {
+                                (0 until nalUnit.size).joinToString(" ") { "%02x".format(nalUnit[it].toInt() and 0xFF) }
+                            }
+                            AirPlayLogger.i("VideoDecoder: Feeding NAL type=$nalType (${when(nalType) {
+                                NAL_TYPE_IDR -> "IDR"
+                                in 1..4 -> "non-IDR"
+                                else -> "other"
+                            }}), size=${nalUnit.size}, hex first 20: [$hex]")
+                        }
+                        
                         // Build complete access unit with SPS/PPS + start codes
                         val accessUnit = buildAccessUnit(nalUnit, nalType == NAL_TYPE_IDR)
                         
@@ -283,15 +314,13 @@ class VideoDecoder(private val surface: Surface) {
     }
 
     fun release() {
-        AirPlayLogger.i("VideoDecoder: release() called (fed=$totalFramesFed, decoded=$totalFramesDecoded, errors=$totalErrors)")
+        AirPlayLogger.i("VideoDecoder: release() called (fed=$totalFramesFed, decoded=$totalFramesDecoded, errors=$totalErrors, SPS=$countSPS, PPS=$countPPS, IDR=$countIDR, nonIDR=$countNonIDR, otherNAL=$countOtherNAL)")
         try {
             codec?.stop()
             codec?.release()
         } catch (_: Exception) {}
         codec = null
         configured = false
-        frameBuffer.reset()
-        expectingMoreFragments = false
         spsPpsData = null
     }
 }
