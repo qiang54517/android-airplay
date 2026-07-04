@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:keepScreenOn="true">
+
+    <!-- Video Surface -->
+    <TextureView
+        android:id="@+id/textureView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        />
+
+    <!-- Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#FF1A1A2E">
+
+        <!-- Device Name -->
+        <EditText
+            android:id="@+id/nameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="设备名称"
+            android:text="Android AirPlay"
+            android:textColor="#FFFFFFFF"
+            android:textColorHint="#88FFFFFF"
+            android:textSize="16sp"
+            android:padding="12dp" />
+
+        <!-- Status -->
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="就绪"
+            android:textColor="#FFAAAAAA"
+            android:textSize="14sp"
+            android:padding="8dp"
+            android:gravity="center" />
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/startBtn"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="启动 AirPlay"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/stopBtn"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="停止"
+                android:textSize="16sp"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <!-- Log Toggle Button -->
+        <Button
+            android:id="@+id/logToggleBtn"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_marginTop="8dp"
+            android:text="📋 查看调试日志"
+            android:textSize="13sp" />
+        
+    </LinearLayout>
+
+    <!-- Log Display (Hidden by default) -->
+    <ScrollView
+        android:id="@+id/logScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="#FF000000"
+        android:visibility="gone"
+        android:padding="8dp">
+        
+        <TextView
+            android:id="@+id/logText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FF00FF00"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:isScrollContainer="true"
+            android:textIsSelectable="true" />
+            
+    </ScrollView>
+
+</LinearLayout>
