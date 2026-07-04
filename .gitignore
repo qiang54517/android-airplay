@@ -1,0 +1,19 @@
+# Build output
+*.apk
+*.ap_
+*.aab
+app/build/
+build/
+.gradle/
+local.properties
+
+# IDE
+*.iml
+.idea/
+.DS_Store
+
+# Gradle wrapper (keep gradlew)
+# gradle/wrapper/
+
+# Logs
+*.log
