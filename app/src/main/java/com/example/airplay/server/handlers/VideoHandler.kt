@@ -62,19 +62,14 @@ class VideoHandler(
         frameCount++
         totalBytes += msg.size
         
-        // Log first 5 frames and every 100th frame with detail
+        // Log first 5 frames and every 100th frame with detail (BEFORE decrypt)
         if (frameCount <= 5 || frameCount % 100 == 0) {
-            val headerHex = if (msg.data.size >= 4) {
-                "%02x %02x %02x %02x".format(
-                    msg.data[0].toInt() and 0xFF,
-                    msg.data[1].toInt() and 0xFF,
-                    msg.data[2].toInt() and 0xFF,
-                    msg.data[3].toInt() and 0xFF
-                )
+            val beforeHex = if (msg.data.size >= 16) {
+                (0 until 16).joinToString(" ") { "%02x".format(msg.data[it].toInt() and 0xFF) }
             } else {
-                "N/A (size=${msg.size})"
+                (0 until msg.data.size).joinToString(" ") { "%02x".format(msg.data[it].toInt() and 0xFF) }
             }
-            AirPlayLogger.i("VideoHandler: Processing video frame #$frameCount, type=${msg.type}, size=${msg.size}, header=[$headerHex]")
+            AirPlayLogger.i("VideoHandler: Frame #$frameCount BEFORE decrypt: type=${msg.type}, size=${msg.size}, hex=[$beforeHex]")
         }
         
         // Decrypt video data
@@ -82,6 +77,16 @@ class VideoHandler(
             airPlay.decryptVideo(msg.data)
         } catch (e: Exception) {
             AirPlayLogger.e("VideoHandler: decryptVideo FAILED on frame #$frameCount: ${e.javaClass.simpleName}: ${e.message}")
+        }
+        
+        // Log AFTER decrypt for comparison (first 5 + every 100)
+        if (frameCount <= 5 || frameCount % 100 == 0) {
+            val afterHex = if (msg.data.size >= 16) {
+                (0 until 16).joinToString(" ") { "%02x".format(msg.data[it].toInt() and 0xFF) }
+            } else {
+                (0 until msg.data.size).joinToString(" ") { "%02x".format(msg.data[it].toInt() and 0xFF) }
+            }
+            AirPlayLogger.i("VideoHandler: Frame #$frameCount AFTER  decrypt: size=${msg.size}, hex=[$afterHex]")
         }
         
         // Send to consumer for decoding + rendering
