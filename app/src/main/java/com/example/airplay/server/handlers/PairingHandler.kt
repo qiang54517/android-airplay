@@ -5,6 +5,7 @@ import com.example.airplay.server.AirPlayConfig
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.FullHttpResponse
+import io.netty.handler.codec.http.HttpHeaderNames
 import java.io.ByteArrayOutputStream
 
 class PairingHandler(
@@ -36,6 +37,7 @@ class PairingHandler(
                         // 即使出错也返回响应
                     }
                     response.content().writeBytes(out.toByteArray())
+                    response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/x-apple-binary-plist")
                     return sendResponse(ctx, request, response)
                 }
                 "/pair-setup" -> {
@@ -53,6 +55,7 @@ class PairingHandler(
                         e.printStackTrace()
                     }
                     response.content().writeBytes(out.toByteArray())
+                    response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/octet-stream")
                     return sendResponse(ctx, request, response)
                 }
                 "/pair-verify" -> {
@@ -76,6 +79,7 @@ class PairingHandler(
                     }
                     response.content().writeBytes(out.toByteArray())
                     AirPlayLogger.i("/pair-verify response length: ${out.size()} bytes")
+                    response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/octet-stream")
                     return sendResponse(ctx, request, response)
                 }
             }
