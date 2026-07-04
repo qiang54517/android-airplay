@@ -19,6 +19,7 @@ import com.example.airplay.protocol.AirPlayLookupTables
 import com.example.airplay.protocol.AudioStreamInfo
 import com.example.airplay.protocol.VideoStreamInfo
 import com.example.airplay.server.*
+import com.example.airplay.utils.AirPlayLogger
 
 class AirPlayService : Service(), AirPlayConsumer {
 
