@@ -56,15 +56,35 @@ class VideoHandler(
 ) : MessageToMessageDecoder<VideoPacket>() {
     
     private var frameCount = 0
+    private var totalBytes = 0L
     
     override fun decode(ctx: ChannelHandlerContext, msg: VideoPacket, out: MutableList<Any>) {
         frameCount++
+        totalBytes += msg.size
         
-        if (frameCount % 100 == 0) {
-            AirPlayLogger.i("VideoHandler: Processing video frame #$frameCount, type=${msg.type}, size=${msg.size}")
+        // Log first 5 frames and every 100th frame with detail
+        if (frameCount <= 5 || frameCount % 100 == 0) {
+            val headerHex = if (msg.data.size >= 4) {
+                "%02x %02x %02x %02x".format(
+                    msg.data[0].toInt() and 0xFF,
+                    msg.data[1].toInt() and 0xFF,
+                    msg.data[2].toInt() and 0xFF,
+                    msg.data[3].toInt() and 0xFF
+                )
+            } else {
+                "N/A (size=${msg.size})"
+            }
+            AirPlayLogger.i("VideoHandler: Processing video frame #$frameCount, type=${msg.type}, size=${msg.size}, header=[$headerHex]")
         }
         
-        airPlay.decryptVideo(msg.data)
+        // Decrypt video data
+        try {
+            airPlay.decryptVideo(msg.data)
+        } catch (e: Exception) {
+            AirPlayLogger.e("VideoHandler: decryptVideo FAILED on frame #$frameCount: ${e.javaClass.simpleName}: ${e.message}")
+        }
+        
+        // Send to consumer for decoding + rendering
         dataConsumer.onVideo(msg.data)
     }
 }
