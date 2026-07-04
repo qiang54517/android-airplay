@@ -4,6 +4,7 @@ import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.util.Log
+import android.view.Surface
 import com.example.airplay.utils.AirPlayLogger
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -11,7 +12,7 @@ import java.nio.ByteBuffer
 class VideoDecoder(private val surface: Surface) {
 
     private var codec: MediaCodec? = null
-    private var configured = false
+    internal var configured = false
     private var totalFramesFed = 0
     private var totalFramesDecoded = 0
     private var totalErrors = 0
